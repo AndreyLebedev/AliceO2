@@ -19,6 +19,11 @@
 #include "FairMQTransportFactoryZMQ.h"
 #endif
 
+
+// DDS
+#include "KeyValue.h"
+#include <boost/asio.hpp>
+
 using namespace std;
 
 using namespace AliceO2::Devices;
@@ -54,7 +59,7 @@ typedef struct DeviceOptions
   string outputSocketType;
   int outputBufSize;
   string outputMethod;
-  string outputAddress;
+//  string outputAddress;
 } DeviceOptions_t;
 
 inline bool parse_cmd_line(int _argc, char* _argv[], DeviceOptions* _options)
@@ -71,7 +76,7 @@ inline bool parse_cmd_line(int _argc, char* _argv[], DeviceOptions* _options)
     ("output-socket-type", bpo::value<string>()->required(), "Output socket type: pub/push")
     ("output-buff-size", bpo::value<int>()->required(), "Output buffer size in number of messages (ZeroMQ)/bytes(nanomsg)")
     ("output-method", bpo::value<string>()->required(), "Output method: bind/connect")
-    ("output-address", bpo::value<string>()->required(), "Output address, e.g.: \"tcp://localhost:5555\"")
+//    ("output-address", bpo::value<string>()->required(), "Output address, e.g.: \"tcp://localhost:5555\"")
     ("help", "Print help messages");
 
   bpo::variables_map vm;
@@ -108,9 +113,9 @@ inline bool parse_cmd_line(int _argc, char* _argv[], DeviceOptions* _options)
     _options->outputMethod = vm["output-method"].as<string>();
   }
 
-  if (vm.count("output-address")) {
-    _options->outputAddress = vm["output-address"].as<string>();
-  }
+//  if (vm.count("output-address")) {
+//    _options->outputAddress = vm["output-address"].as<string>();
+//  }
 
   return true;
 }
@@ -130,6 +135,29 @@ int main(int argc, char** argv)
     LOG(ERROR) << e.what();
     return 1;
   }
+  
+  // DDS
+  // Construct the initial connection string.
+  // Port will be changed after binding.
+  std::string hostname(boost::asio::ip::host_name());
+  boost::asio::io_service io_service;
+  boost::asio::ip::tcp::resolver resolver(io_service);
+  boost::asio::ip::tcp::resolver::query query(hostname, "");
+  boost::asio::ip::tcp::resolver::iterator it_begin = resolver.resolve(query);
+  boost::asio::ip::tcp::resolver::iterator it_end;
+  //for(auto it = it_begin; it != it_end;++it)
+  //{
+  // boost::asio::ip::tcp::endpoint ep = *it;
+  //    std::cout << it->address() << ' ';
+   //}
+
+  // TODO we take the first resolved address
+  boost::asio::ip::tcp::endpoint ep = *it_begin;
+
+  std::stringstream ss;
+  ss << "tcp://" << ep.address() << ":5655";
+  std::string initialOutputAddress = ss.str();
+  //
 
   LOG(INFO) << "PID: " << getpid();
 
@@ -153,10 +181,19 @@ int main(int argc, char** argv)
   sampler.SetProperty(FLPexSampler::OutputSocketType, options.outputSocketType);
   sampler.SetProperty(FLPexSampler::OutputSndBufSize, options.outputBufSize);
   sampler.SetProperty(FLPexSampler::OutputMethod, options.outputMethod);
-  sampler.SetProperty(FLPexSampler::OutputAddress, options.outputAddress);
+  sampler.SetProperty(FLPexSampler::OutputAddress, initialOutputAddress);
 
   sampler.ChangeState(FLPexSampler::SETOUTPUT);
   sampler.ChangeState(FLPexSampler::SETINPUT);
+  sampler.ChangeState(FLPexSampler::BIND);
+  
+  // DDS 
+  // Set property
+  dds::CKeyValue ddsKeyValue;
+  ddsKeyValue.putValue("testFLPSamplerOutputAddress", sampler.GetProperty(FLPexSampler::OutputAddress, "", 0));
+  //
+
+  sampler.ChangeState(FLPexSampler::CONNECT);
   sampler.ChangeState(FLPexSampler::RUN);
 
   // wait until the running thread has finished processing.

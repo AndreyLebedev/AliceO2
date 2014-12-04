@@ -19,6 +19,10 @@
 #include "FairMQTransportFactoryZMQ.h"
 #endif
 
+//DDS
+#include "KeyValue.h"
+#include <boost/asio.hpp>
+
 using namespace std;
 
 using namespace AliceO2::Devices;
@@ -58,13 +62,13 @@ typedef struct DeviceOptions
   vector<string> inputSocketType;
   vector<int> inputBufSize;
   vector<string> inputMethod;
-  vector<string> inputAddress;
+//  vector<string> inputAddress;
   vector<int> logInputRate;
-  vector<string> outputSocketType;
-  vector<int> outputBufSize;
-  vector<string> outputMethod;
-  vector<string> outputAddress;
-  vector<int> logOutputRate;
+  string outputSocketType;
+  int outputBufSize;
+  string outputMethod;
+//  vector<string> outputAddress;
+  int logOutputRate;
 } DeviceOptions_t;
 
 inline bool parse_cmd_line(int _argc, char* _argv[], DeviceOptions* _options)
@@ -85,13 +89,13 @@ inline bool parse_cmd_line(int _argc, char* _argv[], DeviceOptions* _options)
     ("input-socket-type", bpo::value< vector<string> >()->required(), "Input socket type: sub/pull")
     ("input-buff-size", bpo::value< vector<int> >()->required(), "Input buffer size in number of messages (ZeroMQ)/bytes(nanomsg)")
     ("input-method", bpo::value< vector<string> >()->required(), "Input method: bind/connect")
-    ("input-address", bpo::value< vector<string> >()->required(), "Input address, e.g.: \"tcp://localhost:5555\"")
+//    ("input-address", bpo::value< vector<string> >()->required(), "Input address, e.g.: \"tcp://localhost:5555\"")
     ("log-input-rate", bpo::value< vector<int> >()->required(), "Log input rate on socket, 1/0")
-    ("output-socket-type", bpo::value< vector<string> >()->required(), "Output socket type: pub/push")
-    ("output-buff-size", bpo::value< vector<int> >()->required(), "Output buffer size in number of messages (ZeroMQ)/bytes(nanomsg)")
-    ("output-method", bpo::value< vector<string> >()->required(), "Output method: bind/connect")
-    ("output-address", bpo::value< vector<string> >()->required(), "Output address, e.g.: \"tcp://localhost:5555\"")
-    ("log-output-rate", bpo::value< vector<int> >()->required(), "Log output rate on socket, 1/0")
+    ("output-socket-type", bpo::value<string>()->required(), "Output socket type: pub/push")
+    ("output-buff-size", bpo::value<int>()->required(), "Output buffer size in number of messages (ZeroMQ)/bytes(nanomsg)")
+    ("output-method", bpo::value<string>()->required(), "Output method: bind/connect")
+//    ("output-address", bpo::value< vector<string> >()->required(), "Output address, e.g.: \"tcp://localhost:5555\"")
+    ("log-output-rate", bpo::value<int>()->required(), "Log output rate on socket, 1/0")
     ("help", "Print help messages");
 
   bpo::variables_map vm;
@@ -144,32 +148,32 @@ inline bool parse_cmd_line(int _argc, char* _argv[], DeviceOptions* _options)
     _options->inputMethod = vm["input-method"].as<vector<string>>();
   }
 
-  if (vm.count("input-address")) {
-    _options->inputAddress = vm["input-address"].as<vector<string>>();
-  }
+//  if (vm.count("input-address")) {
+//    _options->inputAddress = vm["input-address"].as<vector<string>>();
+//  }
 
   if (vm.count("log-input-rate")) {
     _options->logInputRate = vm["log-input-rate"].as<vector<int>>();
   }
 
   if (vm.count("output-socket-type")) {
-    _options->outputSocketType = vm["output-socket-type"].as<vector<string>>();
+    _options->outputSocketType = vm["output-socket-type"].as<string>();
   }
 
   if (vm.count("output-buff-size")) {
-    _options->outputBufSize = vm["output-buff-size"].as<vector<int>>();
+    _options->outputBufSize = vm["output-buff-size"].as<int>();
   }
 
   if (vm.count("output-method")) {
-    _options->outputMethod = vm["output-method"].as<vector<string>>();
+    _options->outputMethod = vm["output-method"].as<string>();
   }
 
-  if (vm.count("output-address")) {
-    _options->outputAddress = vm["output-address"].as<vector<string>>();
-  }
+//  if (vm.count("output-address")) {
+//    _options->outputAddress = vm["output-address"].as<vector<string>>();
+//  }
 
   if (vm.count("log-output-rate")) {
-    _options->logOutputRate = vm["log-output-rate"].as<vector<int>>();
+    _options->logOutputRate = vm["log-output-rate"].as<int>();
   }
 
   return true;
@@ -190,6 +194,41 @@ int main(int argc, char** argv)
     LOG(ERROR) << e.what();
     return 1;
   }
+  
+  // DDS
+  // Construct the initial connection string.
+  // Port will be changed after binding.
+  std::string hostname(boost::asio::ip::host_name());
+  boost::asio::io_service io_service;
+  boost::asio::ip::tcp::resolver resolver(io_service);
+  boost::asio::ip::tcp::resolver::query query(hostname, "");
+  boost::asio::ip::tcp::resolver::iterator it_begin = resolver.resolve(query);
+  boost::asio::ip::tcp::resolver::iterator it_end;
+  //for(auto it = it_begin; it != it_end;++it)
+  //{
+  // boost::asio::ip::tcp::endpoint ep = *it;
+  //    std::cout << it->address() << ' ';
+   //}
+
+  // TODO we take the first resolved address
+  boost::asio::ip::tcp::endpoint ep = *it_begin;
+
+  std::stringstream ss;
+  ss << "tcp://" << ep.address() << ":5655";
+  std::string initialInputAddress = ss.str();
+  //
+
+  // DDS
+  // Waiting for properties
+  dds::CKeyValue ddsKeyValue;
+  dds::CKeyValue::valuesMap_t values;
+  ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
+  while (values.empty())
+  {
+     ddsKeyValue.waitForUpdate(chrono::seconds(120));
+     ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
+  }
+  //
 
   LOG(INFO) << "PID: " << getpid();
 
@@ -216,20 +255,51 @@ int main(int argc, char** argv)
     flp.SetProperty(FLPex::InputSocketType, options.inputSocketType.at(i), i);
     flp.SetProperty(FLPex::InputRcvBufSize, options.inputBufSize.at(i), i);
     flp.SetProperty(FLPex::InputMethod, options.inputMethod.at(i), i);
-    flp.SetProperty(FLPex::InputAddress, options.inputAddress.at(i), i);
+    //flp.SetProperty(FLPex::InputAddress, options.inputAddress.at(i), i);
     flp.SetProperty(FLPex::LogInputRate, options.logInputRate.at(i), i);
   }
+  flp.SetProperty(FLPex::InputAddress, initialInputAddress, 0);
+  flp.SetProperty(FLPex::InputAddress, initialInputAddress, 1);
+  flp.SetProperty(FLPex::InputAddress, values.begin()->second, 2);
 
+  //dds::CKeyValue::valuesMap_t::const_iterator it_values2 = values2.begin();
   for (int i = 0; i < options.numOutputs; ++i) {
-    flp.SetProperty(FLPex::OutputSocketType, options.outputSocketType.at(i), i);
-    flp.SetProperty(FLPex::OutputSndBufSize, options.outputBufSize.at(i), i);
-    flp.SetProperty(FLPex::OutputMethod, options.outputMethod.at(i), i);
-    flp.SetProperty(FLPex::OutputAddress, options.outputAddress.at(i), i);
-    flp.SetProperty(FLPex::LogOutputRate, options.logOutputRate.at(i), i);
+    flp.SetProperty(FLPex::OutputSocketType, options.outputSocketType, i);
+    flp.SetProperty(FLPex::OutputSndBufSize, options.outputBufSize, i);
+    flp.SetProperty(FLPex::OutputMethod, options.outputMethod, i);
+    flp.SetProperty(FLPex::OutputAddress, "tcp://127.0.0.1:123");//it_values2->second, i);
+    flp.SetProperty(FLPex::LogOutputRate, options.logOutputRate, i);
+	//it_values2++;
   }
 
   flp.ChangeState(FLPex::SETOUTPUT);
   flp.ChangeState(FLPex::SETINPUT);
+  flp.ChangeState(FLPex::BIND);
+  
+  //DDS
+  ddsKeyValue.putValue("commandInputAddress", flp.GetProperty(FLPex::InputAddress, "", 0));
+  ddsKeyValue.putValue("heartbeatInputAddress", flp.GetProperty(FLPex::InputAddress, "", 1));
+  
+  dds::CKeyValue::valuesMap_t values2;
+  ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
+  while (values2.size() != options.numOutputs) 
+  {
+     ddsKeyValue.waitForUpdate(chrono::seconds(120));
+     ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
+  }
+  
+  dds::CKeyValue::valuesMap_t::const_iterator it_values2 = values2.begin();
+  for (int i = 0; i < options.numOutputs; ++i) {
+    flp.SetProperty(FLPex::OutputAddress, it_values2->second, i);
+	it_values2++;
+  }
+  //
+  
+  flp.ChangeState(FLPex::SETOUTPUT);
+  flp.ChangeState(FLPex::SETINPUT);
+  
+  
+  flp.ChangeState(FLPex::CONNECT);
   flp.ChangeState(FLPex::RUN);
 
   // wait until the running thread has finished processing.

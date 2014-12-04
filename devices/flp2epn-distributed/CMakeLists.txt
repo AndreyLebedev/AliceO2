@@ -4,6 +4,12 @@ set(INCLUDE_DIRECTORIES
   ${CMAKE_SOURCE_DIR}/devices/flp2epn-distributed
 )
 
+# DDS
+set(INCLUDE_DIRECTORIES
+  ${INCLUDE_DIRECTORIES}
+  $ENV{DDS_LOCATION}/include
+)
+
 include_directories(${INCLUDE_DIRECTORIES})
 
 configure_file(
@@ -13,6 +19,12 @@ configure_file(
 set(LINK_DIRECTORIES
   ${Boost_LIBRARY_DIRS}
   ${FAIRROOT_LIBRARY_DIR}
+)
+
+# DDS
+set(LINK_DIRECTORIES
+  ${LINK_DIRECTORIES}
+  $ENV{DDS_LOCATION}/lib
 )
 
 link_directories(${LINK_DIRECTORIES})
@@ -57,3 +69,19 @@ ForEach(_file RANGE 0 ${_length})
   set(DEPENDENCIES FLP2EPNex_distributed)
   GENERATE_EXECUTABLE()
 EndForEach(_file RANGE 0 ${_length})
+
+# DDS
+target_link_libraries (
+	testFLP_distributed
+	dds-key-value-lib
+)
+
+target_link_libraries (
+	testEPN_distributed
+	dds-key-value-lib
+)
+
+target_link_libraries (
+	testFLPSampler
+	dds-key-value-lib
+)
