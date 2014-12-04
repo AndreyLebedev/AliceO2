@@ -1,0 +1,82 @@
+<topology id="myTopology">
+	
+	<property id="testFLPSamplerOutputAddress" />
+	<property id="commandInputAddress" />
+	<property id="heartbeatInputAddress" />
+	<property id="testEPNdistributedInputAddress" />
+	
+	<declrequirement id="bsamplerHost">
+    	<hostPattern value=".+.gsi.de"/>
+	</declrequirement>
+	
+	<declrequirement id="mergerHost">
+    	<hostPattern value="cbmmac001.gsi.de"/>
+	</declrequirement>
+	
+	<declrequirement id="sinkHost">
+    	<hostPattern value="cbmmac001.gsi.de"/>
+	</declrequirement>
+	
+  	<decltask id="testFLPSampler">
+		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testFLPSampler --id 101 --event-rate 100 --output-socket-type pub --output-buff-size 10 --output-method bind</exe>
+		<!--requirement>bsamplerHost</requirement-->
+		<properties>
+			<id>testFLPSamplerOutputAddress</id>
+		</properties>
+	</decltask>
+	
+  	<decltask id="testFLPdistributed1">
+		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testFLP_distributed --id FLP0 --event-size 10000000 --num-inputs 3 --num-outputs 5 --heartbeat-timeout 20000 --send-offset 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method connect --log-input-rate 0 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 1</exe>
+		<!--requirement>mergerHost</requirement-->
+		<properties>
+			<id>testFLPSamplerOutputAddress</id>
+			<id>commandInputAddress</id>
+			<id>heartbeatInputAddress</id>
+			<id>testEPNdistributedInputAddress</id>
+		</properties>
+	</decltask>
+	
+  	<decltask id="testFLPdistributed2">
+		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testFLP_distributed --id FLP1 --event-size 10000000 --num-inputs 3 --num-outputs 5 --heartbeat-timeout 20000 --send-offset 1 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method connect --log-input-rate 0 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 1</exe>
+		<!--requirement>mergerHost</requirement-->
+		<properties>
+			<id>testFLPSamplerOutputAddress</id>
+			<id>commandInputAddress</id>
+			<id>heartbeatInputAddress</id>
+			<id>testEPNdistributedInputAddress</id>
+		</properties>
+	</decltask>
+	
+  	<decltask id="testFLPdistributed3">
+		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testFLP_distributed --id FLP2 --event-size 10000000 --num-inputs 3 --num-outputs 5 --heartbeat-timeout 20000 --send-offset 2 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method connect --log-input-rate 0 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 1</exe>
+		<!--requirement>mergerHost</requirement-->
+		<properties>
+			<id>testFLPSamplerOutputAddress</id>
+			<id>commandInputAddress</id>
+			<id>heartbeatInputAddress</id>
+			<id>testEPNdistributedInputAddress</id>
+		</properties>
+	</decltask>
+	
+  	<decltask id="testEPNdistributed">
+		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testEPN_distributed --id EPN0 --num-outputs 3 --heartbeat-interval 5000 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 1 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 0</exe>
+		<!--requirement>mergerHost</requirement-->
+		<properties>
+			<id>commandInputAddress</id>
+			<id>heartbeatInputAddress</id>
+			<id>testEPNdistributedInputAddress</id>
+		</properties>
+	</decltask>
+	
+	
+	<main id="main">
+	    <task>testFLPSampler</task>
+	    <task>testFLPdistributed1</task>
+		<task>testFLPdistributed2</task>
+		<task>testFLPdistributed3</task>
+		<group id="groupEPN" n="5">
+			<task>testEPNdistributed</task>
+		</group>
+	</main>
+	
+</topology>
