@@ -73,10 +73,10 @@ void EPNex::Run()
 
       if (fEventBuffer.find(*id) == fEventBuffer.end()) {
         fEventBuffer[*id] = 1;
-        // PrintBuffer(fEventBuffer);
+        PrintBuffer(fEventBuffer);
       } else {
         ++fEventBuffer[*id];
-        // PrintBuffer(fEventBuffer);
+        PrintBuffer(fEventBuffer);
         if (fEventBuffer[*id] == numFLPs) {
           // LOG(INFO) << "collected " << numFLPs << " parts of event #" << *id << ", processing...";
           // LOG(INFO) << "# of full events: " << ++fullEvents;
