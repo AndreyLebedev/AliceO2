@@ -222,11 +222,27 @@ int main(int argc, char** argv)
   // Waiting for properties
   dds::CKeyValue ddsKeyValue;
   dds::CKeyValue::valuesMap_t values;
+  //ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
+  //while (values.empty())
+  //{
+  //   ddsKeyValue.waitForUpdate(chrono::seconds(120));
+  //   ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
+  //}
+  
+  
+  // Subscribe on key update events
+  {
+  std::mutex keyMutex;
+  std::condition_variable keyCondition;
+  
+  ddsKeyValue.subscribe([&keyCondition](const string& /*_key*/, const string& /*_value*/) {keyCondition.notify_all();});
   ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
   while (values.empty())
   {
-     ddsKeyValue.waitForUpdate(chrono::seconds(120));
-     ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
+      unique_lock<mutex> lock(keyMutex);
+	  keyCondition.wait_until(lock, std::chrono::system_clock::now() + chrono::milliseconds(1000));
+      ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
+  }
   }
   //
 
@@ -281,12 +297,30 @@ int main(int argc, char** argv)
   ddsKeyValue.putValue("heartbeatInputAddress", flp.GetProperty(FLPex::InputAddress, "", 1));
   
   dds::CKeyValue::valuesMap_t values2;
-  ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
-  while (values2.size() != options.numOutputs) 
+  
+  // Subscribe on key update events
   {
-     ddsKeyValue.waitForUpdate(chrono::seconds(120));
-     ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
+  std::mutex keyMutex;
+  std::condition_variable keyCondition;
+  
+  ddsKeyValue.subscribe([&keyCondition](const string& /*_key*/, const string& /*_value*/) {keyCondition.notify_all();});
+  ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
+  while (values2.size() != options.numOutputs)
+  {
+      unique_lock<mutex> lock(keyMutex);
+	  keyCondition.wait_until(lock, std::chrono::system_clock::now() + chrono::milliseconds(1000));
+      ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
   }
+  }
+  //
+  
+  
+ // ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
+ // while (values2.size() != options.numOutputs) 
+ // {
+ //    ddsKeyValue.waitForUpdate(chrono::seconds(120));
+ //    ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
+ // }
   
   dds::CKeyValue::valuesMap_t::const_iterator it_values2 = values2.begin();
   for (int i = 0; i < options.numOutputs; ++i) {

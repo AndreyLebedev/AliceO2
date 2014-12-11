@@ -6,15 +6,15 @@
 	<property id="testEPNdistributedInputAddress" />
 	
 	<declrequirement id="testFLPSamplerHost">
-    	<hostPattern value=".*cbmnbp053.gsi.de"/>
+    	<hostPattern value=".*"/>
 	</declrequirement>
 	
 	<declrequirement id="testFLPdistributedHost">
-    	<hostPattern value=".*cbmnbp053.*"/>
+    	<hostPattern value=".*"/>
 	</declrequirement>
 	
 	<declrequirement id="testEPNdistributedHost">
-    	<hostPattern value="cbmmac001.gsi.de"/>
+    	<hostPattern value="cbmmac(004|002|003|001)\.gsi\.de"/>
 	</declrequirement>
 	
   	<decltask id="testFLPSampler">
@@ -37,7 +37,7 @@
 	</decltask>
 	
   	<decltask id="testEPNdistributed">
-		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testEPN_distributed --id EPN0 --num-outputs 5 --heartbeat-interval 5000 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 1 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 0</exe>
+		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testEPN_distributed --id EPN0 --num-outputs  --heartbeat-interval 5000 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 1 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 0</exe>
 		<requirement>testEPNdistributedHost</requirement>
 		<properties>
 			<id>commandInputAddress</id>
