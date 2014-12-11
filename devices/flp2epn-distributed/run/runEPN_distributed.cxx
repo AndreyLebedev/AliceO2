@@ -253,7 +253,7 @@ int main(int argc, char** argv)
   std::mutex keyMutex;
   std::condition_variable keyCondition;
   
-  ddsKeyValue.subscribe([&keyCondition](const string& /*_key*/, const string& /*_value*/) {keyCondition.notify_all();});
+  ddsKeyValue.subscribe([&keyCondition](const string& _key, const string& _value) {keyCondition.notify_all();});
 
   ddsKeyValue.getValues("heartbeatInputAddress", &values);
   while (values.size() != options.numOutputs)
@@ -263,14 +263,7 @@ int main(int argc, char** argv)
       ddsKeyValue.getValues("heartbeatInputAddress", &values);
   }
   }
-  
-  //ddsKeyValue.getValues("heartbeatInputAddress", &values);
-  //while (values.size() != options.numOutputs)
-  //{
-  //   ddsKeyValue.waitForUpdate(chrono::seconds(120));
-  //   ddsKeyValue.getValues("heartbeatInputAddress", &values);
-  //}
-  //
+
   dds::CKeyValue::valuesMap_t::const_iterator it_values = values.begin();
   for (int i = 0; i < options.numOutputs; ++i)
   {
