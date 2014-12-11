@@ -222,13 +222,6 @@ int main(int argc, char** argv)
   // Waiting for properties
   dds::CKeyValue ddsKeyValue;
   dds::CKeyValue::valuesMap_t values;
-  //ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
-  //while (values.empty())
-  //{
-  //   ddsKeyValue.waitForUpdate(chrono::seconds(120));
-  //   ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
-  //}
-  
   
   // Subscribe on key update events
   {
@@ -313,14 +306,6 @@ int main(int argc, char** argv)
   }
   }
   //
-  
-  
- // ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
- // while (values2.size() != options.numOutputs) 
- // {
- //    ddsKeyValue.waitForUpdate(chrono::seconds(120));
- //    ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
- // }
   
   dds::CKeyValue::valuesMap_t::const_iterator it_values2 = values2.begin();
   for (int i = 0; i < options.numOutputs; ++i) {
