@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <csignal>
+#include <mutex>
 
 #include "boost/program_options.hpp"
 
@@ -232,7 +233,7 @@ int main(int argc, char** argv)
   ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
   while (values.empty())
   {
-      unique_lock<mutex> lock(keyMutex);
+      std::unique_lock<std::mutex> lock(keyMutex);
 	  keyCondition.wait_until(lock, std::chrono::system_clock::now() + chrono::milliseconds(1000));
       ddsKeyValue.getValues("testFLPSamplerOutputAddress", &values);
   }
@@ -300,7 +301,7 @@ int main(int argc, char** argv)
   ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
   while (values2.size() != options.numOutputs)
   {
-      unique_lock<mutex> lock(keyMutex);
+      std::unique_lock<std::mutex> lock(keyMutex);
 	  keyCondition.wait_until(lock, std::chrono::system_clock::now() + chrono::milliseconds(1000));
       ddsKeyValue.getValues("testEPNdistributedInputAddress", &values2);
   }

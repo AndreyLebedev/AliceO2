@@ -26,7 +26,7 @@
 	</decltask>
 	
   	<decltask id="testFLPdistributed">
-		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testFLP_distributed --id FLP0 --event-size 10000000 --num-inputs 3 --num-outputs 10 --heartbeat-timeout 20000 --send-offset 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method connect --log-input-rate 0 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 1</exe>
+		<exe reachable="false">/Users/andrey/Development/gsi/aliceo2/build_dds/bin/testFLP_distributed --id FLP0 --event-size 10000000 --num-inputs 3 --num-outputs 25 --heartbeat-timeout 20000 --send-offset 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method bind --log-input-rate 0 --input-socket-type sub --input-buff-size 10 --input-method connect --log-input-rate 0 --output-socket-type pub --output-buff-size 10 --output-method connect --log-output-rate 1</exe>
 		<requirement>testFLPdistributedHost</requirement>
 		<properties>
 			<id>testFLPSamplerOutputAddress</id>
@@ -52,7 +52,7 @@
 		<group id="groupFLP" n="5">
 			<task>testFLPdistributed</task>
 		</group>
-		<group id="groupEPN" n="10">
+		<group id="groupEPN" n="25">
 			<task>testEPNdistributed</task>
 		</group>
 	</main>

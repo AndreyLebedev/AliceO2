@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <csignal>
+#include <mutex>
 
 #include "boost/program_options.hpp"
 
@@ -258,7 +259,7 @@ int main(int argc, char** argv)
   ddsKeyValue.getValues("heartbeatInputAddress", &values);
   while (values.size() != options.numOutputs)
   {
-      unique_lock<mutex> lock(keyMutex);
+      std::unique_lock<std::mutex> lock(keyMutex);
 	  keyCondition.wait_until(lock, std::chrono::system_clock::now() + chrono::milliseconds(1000));
       ddsKeyValue.getValues("heartbeatInputAddress", &values);
   }
