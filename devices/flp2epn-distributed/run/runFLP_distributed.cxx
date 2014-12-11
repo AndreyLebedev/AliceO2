@@ -8,6 +8,7 @@
 #include <iostream>
 #include <csignal>
 #include <mutex>
+#include <condition_variable>
 
 #include "boost/program_options.hpp"
 
